@@ -1,0 +1,90 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heart Health Predictor</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<main class="container">
+    <header>
+        <p class="eyebrow">HEALTH RESEARCH PROJECT</p>
+        <h1>Heart Health Predictor</h1>
+        <p class="subtitle">
+            Enter the available health information below.
+        </p>
+    </header>
+
+    <form method="POST">
+        <div class="form-grid">
+            {% for field in fields %}
+            <div class="field">
+                <label for="{{ field.name }}">
+                    {{ field.label }}
+                    {% if field.unit %}
+                    <span class="unit">({{ field.unit }})</span>
+                    {% endif %}
+                </label>
+
+                {% if field.kind == "select" %}
+                <select id="{{ field.name }}" name="{{ field.name }}">
+                    <option value="">Select an option</option>
+                    {% for code, label in field.choices %}
+                    <option value="{{ code }}"
+                        {% if values.get(field.name, '') == code %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+                {% else %}
+                <input
+                    type="number"
+                    step="any"
+                    id="{{ field.name }}"
+                    name="{{ field.name }}"
+                    value="{{ values.get(field.name, '') }}"
+                    min="{{ field.min if field.min is defined else '' }}"
+                    max="{{ field.max if field.max is defined else '' }}"
+                    placeholder="Enter value"
+                >
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <p class="hint">
+            Enter values from a reliable health record where possible.
+            You may leave unavailable fields blank.
+        </p>
+
+        <button type="submit">Run Prediction</button>
+    </form>
+
+    {% if prediction %}
+    <section class="result">
+        <h2>Model Output</h2>
+        <p class="prediction">{{ prediction }}</p>
+
+        {% if probability is not none %}
+        <p>
+            Estimated probability for class 1:
+            <strong>{{ probability }}%</strong>
+        </p>
+        {% endif %}
+
+        <p class="disclaimer">
+            This is an educational research prototype, not a medical
+            diagnosis or a validated personal risk assessment.
+        </p>
+    </section>
+    {% endif %}
+
+    {% if error %}
+    <section class="error">{{ error }}</section>
+    {% endif %}
+</main>
+</body>
+</html>
