@@ -7,11 +7,18 @@ from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
+# -----------------------------------------
+# 1. Load saved ML pipeline
+# -----------------------------------------
 BASE_DIR = Path(__file__).resolve().parent
 MODEL_PATH = BASE_DIR / "models" / "heart_model.pkl"
 
 model = joblib.load(MODEL_PATH)
 
+
+# -----------------------------------------
+# 2. Get the exact training feature names
+# -----------------------------------------
 if hasattr(model, "feature_names_in_"):
     FEATURES = list(model.feature_names_in_)
 else:
@@ -21,10 +28,13 @@ else:
         "BPMEDS", "HEARTRTE", "GLUCOSE", "educ", "PREVHYP"
     ]
 
-# User-friendly labels, units, and basic input limits
+
+# -----------------------------------------
+# 3. User-friendly field information
+# -----------------------------------------
 FIELD_INFO = {
     "SEX": {
-        "label": "Gender",
+        "label": "Sex",
         "kind": "select",
         "choices": [("1", "Male"), ("2", "Female")]
     },
@@ -59,6 +69,7 @@ FIELD_INFO = {
     },
     "CIGPDAY": {
         "label": "Cigarettes per day",
+        "unit": "cigarettes",
         "min": 0,
         "max": 100
     },
@@ -91,7 +102,7 @@ FIELD_INFO = {
         "max": 700
     },
     "educ": {
-        "label": "Education Level (dataset category)",
+        "label": "Education Level",
         "kind": "select",
         "choices": [
             ("1", "Category 1"),
@@ -107,7 +118,7 @@ FIELD_INFO = {
     }
 }
 
-# Add a readable label for any other feature used by the model.
+# Support any additional features used during training
 for feature in FEATURES:
     if feature not in FIELD_INFO:
         FIELD_INFO[feature] = {
@@ -115,14 +126,29 @@ for feature in FEATURES:
         }
 
 
-@app.route("/", methods=["GET", "POST"])
-def home():
+# -----------------------------------------
+# 4. Homepage
+# URL: /
+# -----------------------------------------
+@app.route("/")
+def index():
+    return render_template("index.html")
+
+
+# -----------------------------------------
+# 5. Health assessment and prediction
+# URL: /assessment
+# -----------------------------------------
+@app.route("/assessment", methods=["GET", "POST"])
+def assessment():
+
     prediction = None
     probability = None
     error = None
     values = {}
     fields = []
 
+    # Build form fields dynamically
     for feature in FEATURES:
         info = FIELD_INFO[feature].copy()
         info["name"] = feature
@@ -130,63 +156,90 @@ def home():
         info["kind"] = info.get("kind", "number")
         fields.append(info)
 
+    # Handle submitted form
     if request.method == "POST":
         try:
             row = {}
 
             for feature in FEATURES:
-                raw_value = request.form.get(feature, "").strip()
+                raw_value = request.form.get(
+                    feature, ""
+                ).strip()
+
                 values[feature] = raw_value
 
+                # Blank inputs are passed as missing values
                 if raw_value == "":
                     row[feature] = float("nan")
-                else:
-                    value = float(raw_value)
+                    continue
 
-                    info = FIELD_INFO[feature]
-                    if "min" in info and value < info["min"]:
+                value = float(raw_value)
+                info = FIELD_INFO[feature]
+
+                # Validate numeric ranges
+                if "min" in info and value < info["min"]:
+                    raise ValueError(
+                        f"{info['label']} must be at least "
+                        f"{info['min']}."
+                    )
+
+                if "max" in info and value > info["max"]:
+                    raise ValueError(
+                        f"{info['label']} must not exceed "
+                        f"{info['max']}."
+                    )
+
+                # Validate dropdown values
+                if info.get("kind") == "select":
+                    allowed_values = [
+                        float(code)
+                        for code, _ in info["choices"]
+                    ]
+
+                    if value not in allowed_values:
                         raise ValueError(
-                            f"{info['label']} must be at least {info['min']}."
-                        )
-                    if "max" in info and value > info["max"]:
-                        raise ValueError(
-                            f"{info['label']} must not exceed {info['max']}."
+                            f"Please select a valid option for "
+                            f"{info['label']}."
                         )
 
-                    if info.get("kind") == "select":
-                        allowed = [float(code) for code, _ in info["choices"]]
-                        if value not in allowed:
-                            raise ValueError(
-                                f"Please select a valid option for {info['label']}."
-                            )
+                row[feature] = value
 
-                    row[feature] = value
+            # Keep training feature order and names
+            patient = pd.DataFrame(
+                [row],
+                columns=FEATURES
+            )
 
-            patient = pd.DataFrame([row], columns=FEATURES)
-
+            # The saved pipeline performs preprocessing automatically
             result = int(model.predict(patient)[0])
+
             prediction = f"Predicted class: {result}"
 
+            # Probability for class 1, if supported
             if hasattr(model, "predict_proba"):
                 probabilities = model.predict_proba(patient)[0]
                 classes = list(model.classes_)
 
                 if 1 in classes:
                     probability = round(
-                        float(probabilities[classes.index(1)]) * 100, 2
+                        float(
+                            probabilities[classes.index(1)]
+                        ) * 100,
+                        2
                     )
 
         except (ValueError, TypeError) as exc:
             error = str(exc) or "Please enter valid values."
+
         except Exception:
             app.logger.exception("Prediction failed")
             error = (
-                "Prediction failed. Check model features, preprocessing, "
-                "and the input values."
+                "Prediction failed. Please check the model, "
+                "feature names, and input values."
             )
 
     return render_template(
-        "index.html",
+        "model.html",
         fields=fields,
         values=values,
         prediction=prediction,
@@ -195,5 +248,8 @@ def home():
     )
 
 
+# -----------------------------------------
+# 6. Run Flask application
+# -----------------------------------------
 if __name__ == "__main__":
     app.run(debug=True)
