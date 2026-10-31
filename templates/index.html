@@ -15,23 +15,23 @@
   .container{max-width:1800px;margin:0 auto;padding:0 48px}
 
   header{background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.08);position:sticky;top:0;z-index:10}
-  .brand{display:flex;align-items:center;gap:14px;height:96px;font-size:2rem;font-weight:600}
+  .brand{display:flex;align-items:center;gap:14px;height:60px;font-size:1.5rem;font-weight:600}
   .brand svg{width:46px;height:46px;stroke:var(--red);fill:none;stroke-width:2;flex:none}
 
-  .hero{background:linear-gradient(#eff6ff,#f8fafc);padding:96px 0 120px}
+  .hero{background:linear-gradient(#eff6ff,#f8fafc);padding:60px 0 120px}
   .hero .container{display:grid;grid-template-columns:1fr 1fr;gap:96px;align-items:center}
-  h1{font-size:4.2rem;line-height:1.1;font-weight:800;margin-bottom:32px}
-  .hero p.lead{font-size:1.75rem;color:var(--muted);margin-bottom:40px;line-height:1.6}
+  h1{font-size:2.5rem;line-height:1.1;font-weight:700;margin-bottom:32px}
+  .hero p.lead{font-size:1.25rem;color:var(--muted);margin-bottom:40px;line-height:1.6}
   .btn{display:inline-block;border:0;cursor:pointer;font:inherit;font-weight:600;border-radius:8px;text-decoration:none;transition:filter .15s,transform .1s}
   .btn:hover{filter:brightness(.95)}
   .btn:active{transform:translateY(1px)}
   .btn:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #1d4ed8;outline-offset:2px}
-  .btn-red{background:var(--red);color:#fff;font-size:1.6rem;padding:18px 48px}
+  .btn-red{background:var(--red);color:#fff;font-size:1.6rem;padding:8px 12px}
   .disclaimer{margin-top:32px;font-size:1.25rem;color:var(--muted)}
   .logo-card{background:#fff;border-radius:24px;box-shadow:0 20px 40px rgba(15,23,42,.12);overflow:hidden}
   .logo-card img{display:block;width:100%;height:auto}
 
-  h2.center{text-align:center;font-size:2.6rem;font-weight:800;margin-bottom:64px}
+  h2.center{text-align:center;font-size:2.6rem;font-weight:800;margin-bottom:28px}
   .features{padding:40px 0 100px}
   .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:48px}
   .card{background:#fff;border-radius:20px;padding:36px;box-shadow:0 4px 14px rgba(15,23,42,.1)}
@@ -114,7 +114,7 @@
 
         <p class="disclaimer">⚠️ This tool is for educational purposes only and does not replace professional medical advice.</p>
       </div>
-      <div class="logo-card"><img src="images/cmed-logo.png" alt="CMed logo"></div>
+      <div class="logo-card"><img src="{{ url_for('static', filename='images/cmed-logo.png') }}" alt="CMed logo"></div>
     </div>
   </section>
 
@@ -143,7 +143,8 @@
 
   <section class="factors">
     <div class="container">
-      <img src="images/doctor.png" alt="Doctor with a stethoscope">
+     <img src="{{ url_for('static', filename='images/doctor.png') }}" alt="Doctor with a stethoscope">
+
       <div>
         <h2>Key Risk Factors We Analyze</h2>
         <p>Our prediction model evaluates multiple factors known to contribute to heart disease risk. Understanding these factors can help you make informed decisions about your health.</p>
