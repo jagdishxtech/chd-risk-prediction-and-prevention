@@ -158,3 +158,52 @@ footer {
     font-weight: normal;
     font-size: 12px;
 }
+
+/* Navigation Bar */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0px 2%;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.navbar .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 21px;
+    font-weight: bold;
+    color: #182337;
+    margin: 0;
+}
+
+.heart {
+    color: #e63946;
+    font-size: 40px;
+}
+
+.back-link {
+    text-decoration: none;
+    color: #245bd0;
+    font-weight: bold;
+}
+
+.back-link:hover {
+    color: #1947ad;
+}
+
+@media (max-width: 600px) {
+    .navbar {
+        padding: 15px 4%;
+    }
+
+    .navbar .brand {
+        font-size: 17px;
+    }
+
+    .back-link {
+        font-size: 13px;
+    }
+}

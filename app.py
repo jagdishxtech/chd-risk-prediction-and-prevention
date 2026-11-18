@@ -8,127 +8,169 @@ from flask import Flask, render_template, request
 app = Flask(__name__)
 
 # -----------------------------------------
-# 1. Load saved ML pipeline
+# 1. Load saved ML model
 # -----------------------------------------
 BASE_DIR = Path(__file__).resolve().parent
-MODEL_PATH = BASE_DIR / "models" / "heart_model.pkl"
+MODEL_PATH = BASE_DIR / "models" / "model.pkl"
 
 model = joblib.load(MODEL_PATH)
 
 
 # -----------------------------------------
-# 2. Get the exact training feature names
+# 2. Dataset feature names
 # -----------------------------------------
 if hasattr(model, "feature_names_in_"):
     FEATURES = list(model.feature_names_in_)
 else:
     FEATURES = [
-        "SEX", "AGE", "TOTCHOL", "SYSBP", "DIABP",
-        "CURSMOKE", "CIGPDAY", "BMI", "DIABETES",
-        "BPMEDS", "HEARTRTE", "GLUCOSE", "educ", "PREVHYP"
+        "age", "sex", "cp", "trestbps", "chol",
+        "fbs", "restecg", "thalach", "exang",
+        "oldpeak", "slope", "ca", "thal"
     ]
 
+# Target is NOT an input feature
+TARGET = "target"
+
 
 # -----------------------------------------
-# 3. User-friendly field information
+# 3. Field information
 # -----------------------------------------
 FIELD_INFO = {
-    "SEX": {
-        "label": "Sex",
-        "kind": "select",
-        "choices": [("1", "Male"), ("2", "Female")]
-    },
-    "AGE": {
+    "age": {
         "label": "Age",
+        "kind": "number",
         "unit": "years",
         "min": 18,
         "max": 120
     },
-    "TOTCHOL": {
-        "label": "Total Cholesterol",
-        "unit": "mg/dL",
-        "min": 50,
-        "max": 700
+
+    "sex": {
+        "label": "Gender",
+        "kind": "select",
+        "choices": [
+            ("1", "Male"),
+            ("0", "Female")
+        ]
     },
-    "SYSBP": {
-        "label": "Systolic Blood Pressure",
+
+    "cp": {
+        "label": "Chest Pain Type",
+        "kind": "select",
+        "choices": [
+            ("0", "Type 0 - Typical Angina"),
+            ("1", "Type 1 - Atypical Angina"),
+            ("2", "Type 2 - Non-anginal Pain"),
+            ("3", "Type 3 - Asymptomatic")
+        ]
+    },
+
+    "trestbps": {
+        "label": "Resting Blood Pressure",
+        "kind": "number",
         "unit": "mmHg",
         "min": 50,
         "max": 300
     },
-    "DIABP": {
-        "label": "Diastolic Blood Pressure",
-        "unit": "mmHg",
-        "min": 20,
-        "max": 200
-    },
-    "CURSMOKE": {
-        "label": "Do you currently smoke?",
-        "kind": "select",
-        "choices": [("0", "No"), ("1", "Yes")]
-    },
-    "CIGPDAY": {
-        "label": "Cigarettes per day",
-        "unit": "cigarettes",
-        "min": 0,
-        "max": 100
-    },
-    "BMI": {
-        "label": "Body Mass Index (BMI)",
-        "unit": "kg/m²",
-        "min": 10,
-        "max": 80
-    },
-    "DIABETES": {
-        "label": "Have you been diagnosed with diabetes?",
-        "kind": "select",
-        "choices": [("0", "No"), ("1", "Yes")]
-    },
-    "BPMEDS": {
-        "label": "Do you take blood-pressure medication?",
-        "kind": "select",
-        "choices": [("0", "No"), ("1", "Yes")]
-    },
-    "HEARTRTE": {
-        "label": "Resting Heart Rate",
-        "unit": "beats/minute",
-        "min": 20,
-        "max": 250
-    },
-    "GLUCOSE": {
-        "label": "Blood Glucose",
+
+    "chol": {
+        "label": "Serum Cholesterol",
+        "kind": "number",
         "unit": "mg/dL",
-        "min": 20,
+        "min": 50,
         "max": 700
     },
-    "educ": {
-        "label": "Education Level",
+
+    "fbs": {
+        "label": "Fasting Blood Sugar > 120 mg/dL",
         "kind": "select",
         "choices": [
-            ("1", "Category 1"),
-            ("2", "Category 2"),
-            ("3", "Category 3"),
-            ("4", "Category 4")
+            ("0", "No"),
+            ("1", "Yes")
         ]
     },
-    "PREVHYP": {
-        "label": "History of Hypertension",
+
+    "restecg": {
+        "label": "Resting ECG",
         "kind": "select",
-        "choices": [("0", "No"), ("1", "Yes")]
+        "choices": [
+            ("0", "Category 0"),
+            ("1", "Category 1"),
+            ("2", "Category 2")
+        ]
+    },
+
+    "thalach": {
+        "label": "Maximum Heart Rate",
+        "kind": "number",
+        "unit": "beats/minute",
+        "min": 30,
+        "max": 250
+    },
+
+    "exang": {
+        "label": "Exercise Induced Angina",
+        "kind": "select",
+        "choices": [
+            ("0", "No"),
+            ("1", "Yes")
+        ]
+    },
+
+    "oldpeak": {
+        "label": "Oldpeak (ST Depression)",
+        "kind": "number",
+        "unit": "Value",
+        "min": 0,
+        "max": 10
+    },
+
+    "slope": {
+        "label": "Slope of Peak Exercise ST Segment",
+        "kind": "select",
+        "choices": [
+            ("0", "Category 0"),
+            ("1", "Category 1"),
+            ("2", "Category 2")
+        ]
+    },
+
+    "ca": {
+        "label": "Number of Major Vessels",
+        "kind": "select",
+        "choices": [
+            ("0", "0"),
+            ("1", "1"),
+            ("2", "2"),
+            ("3", "3"),
+            ("4", "4")
+        ]
+    },
+
+    "thal": {
+        "label": "Thalassemia",
+        "kind": "select",
+        "choices": [
+            ("0", "Category 0"),
+            ("1", "Category 1"),
+            ("2", "Category 2"),
+            ("3", "Category 3")
+        ]
     }
 }
 
-# Support any additional features used during training
+
+# -----------------------------------------
+# 4. Check all model features are supported
+# -----------------------------------------
 for feature in FEATURES:
     if feature not in FIELD_INFO:
-        FIELD_INFO[feature] = {
-            "label": feature.replace("_", " ").title()
-        }
+        raise ValueError(
+            f"Missing FIELD_INFO configuration for: {feature}"
+        )
 
 
 # -----------------------------------------
-# 4. Homepage
-# URL: /
+# 5. Homepage
 # -----------------------------------------
 @app.route("/")
 def index():
@@ -136,8 +178,7 @@ def index():
 
 
 # -----------------------------------------
-# 5. Health assessment and prediction
-# URL: /assessment
+# 6. Heart Disease Assessment
 # -----------------------------------------
 @app.route("/assessment", methods=["GET", "POST"])
 def assessment():
@@ -148,75 +189,80 @@ def assessment():
     values = {}
     fields = []
 
-    # Build form fields dynamically
+    # Generate form fields
     for feature in FEATURES:
         info = FIELD_INFO[feature].copy()
         info["name"] = feature
         info["unit"] = info.get("unit", "")
-        info["kind"] = info.get("kind", "number")
         fields.append(info)
 
-    # Handle submitted form
+    # Process form submission
     if request.method == "POST":
+
         try:
             row = {}
 
             for feature in FEATURES:
+
                 raw_value = request.form.get(
                     feature, ""
                 ).strip()
 
                 values[feature] = raw_value
 
-                # Blank inputs are passed as missing values
+                # All inputs are required
                 if raw_value == "":
-                    row[feature] = float("nan")
-                    continue
+                    raise ValueError(
+                        f"Please enter {FIELD_INFO[feature]['label']}."
+                    )
 
                 value = float(raw_value)
+
                 info = FIELD_INFO[feature]
 
-                # Validate numeric ranges
+                # Validate numerical ranges
                 if "min" in info and value < info["min"]:
                     raise ValueError(
-                        f"{info['label']} must be at least "
-                        f"{info['min']}."
+                        f"{info['label']} must be at least {info['min']}."
                     )
 
                 if "max" in info and value > info["max"]:
                     raise ValueError(
-                        f"{info['label']} must not exceed "
-                        f"{info['max']}."
+                        f"{info['label']} must not exceed {info['max']}."
                     )
 
-                # Validate dropdown values
-                if info.get("kind") == "select":
+                # Validate dropdown options
+                if info["kind"] == "select":
+
                     allowed_values = [
                         float(code)
-                        for code, _ in info["choices"]
+                        for code, label in info["choices"]
                     ]
 
                     if value not in allowed_values:
                         raise ValueError(
-                            f"Please select a valid option for "
-                            f"{info['label']}."
+                            f"Invalid selection for {info['label']}."
                         )
 
                 row[feature] = value
 
-            # Keep training feature order and names
+            # Create DataFrame in training feature order
             patient = pd.DataFrame(
                 [row],
                 columns=FEATURES
             )
 
-            # The saved pipeline performs preprocessing automatically
+            # Predict
             result = int(model.predict(patient)[0])
 
-            prediction = f"Predicted class: {result}"
+            if result == 1:
+                prediction = "Heart Disease Detected by Model"
+            else:
+                prediction = "Heart Disease Not Detected by Model"
 
-            # Probability for class 1, if supported
+            # Calculate probability
             if hasattr(model, "predict_proba"):
+
                 probabilities = model.predict_proba(patient)[0]
                 classes = list(model.classes_)
 
@@ -233,9 +279,10 @@ def assessment():
 
         except Exception:
             app.logger.exception("Prediction failed")
+
             error = (
-                "Prediction failed. Please check the model, "
-                "feature names, and input values."
+                "Prediction failed. Check your saved model "
+                "and training feature names."
             )
 
     return render_template(
@@ -249,7 +296,7 @@ def assessment():
 
 
 # -----------------------------------------
-# 6. Run Flask application
+# 7. Run Flask
 # -----------------------------------------
 if __name__ == "__main__":
     app.run(debug=True)
