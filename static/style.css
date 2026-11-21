@@ -79,7 +79,7 @@ button {
     padding: 14px;
     border: none;
     border-radius: 9px;
-    background: #245bd0;
+    background: red;
     color: white;
     font-size: 16px;
     font-weight: bold;
@@ -186,7 +186,7 @@ footer {
 
 .back-link {
     text-decoration: none;
-    color: #245bd0;
+    color: black;
     font-weight: bold;
 }
 
